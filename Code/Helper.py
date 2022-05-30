@@ -4,6 +4,8 @@ import math
 from psychopy.constants import (PLAYING, PAUSED)
 from psychopy.hardware import keyboard
 from Parameters import*
+import pandas as pd
+from datetime import datetime 
 
 def getUserInfo():
     again = False
@@ -79,7 +81,8 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
         positions = [(0.29,0.34),(0.12,0.34),(-0.42,0.34),(0.5,0.24)]
     else :
         positions = [(0.38,0.29),(0.18,0.29),(-0.42,0.29),(0.5,0.20)]
-
+        
+    
     windows.color = [1,1,1]
     windows.flip()
     
@@ -87,16 +90,16 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
         win = windows,
         image = "../Asset/Pics/" + feedb_pic_dir + ".PNG" 
         )
-    Left_img = visual.ImageStim(
-        win = windows,
-        image = "../Asset/Pics/" + "L1" + ".PNG" ,
-        pos=(-770 , 0)
-        )
-    Right_img = visual.ImageStim(
-        win = windows,
-        image = "../Asset/Pics/" + "R1" + ".PNG" ,
-        pos=(770 , 0)
-        )
+#    Left_img = visual.ImageStim(
+#        win = windows,
+#        image = "../Asset/Pics/" + "L1" + ".PNG" ,
+#        pos=(-770 , 0)
+#        )
+#    Right_img = visual.ImageStim(
+#        win = windows,
+#        image = "../Asset/Pics/" + "R1" + ".PNG" ,
+#        pos=(770 , 0)
+#        )
     
     txt_nCorRes = visual.TextBox(
         window=windows,
@@ -139,8 +142,8 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
         grid_horz_justification='center',
         units='norm')
     img.draw()
-    Left_img.draw()
-    Right_img.draw()
+#    Left_img.draw()
+#    Right_img.draw()
     txt_nCorRes.draw()
     txt_exptMins.draw()
     txt_pointsPerMin.draw()
@@ -148,15 +151,15 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
     windows.flip()
     
     #fixed 
-    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
-    play_encode_num (nCorRes)
-    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
-    play_encode_num (exptMins)
-    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
-    play_encode_num (pointsPerMin)
-    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
-    play_encode_num (math.floor(pointsPerMin/5))
-    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
+#    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (nCorRes)
+#    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (exptMins)
+#    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (pointsPerMin)
+#    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (math.floor(pointsPerMin/5))
+#    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
     
 #    if(feedb_pic_dir[:2] == "LF"):
 #        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
@@ -244,8 +247,22 @@ def playSound(duration,soundName):
     core.wait(duration)
 
     
+def playVideo(win,movieName):
+    mov = visual.MovieStim3(win, filename = "../Asset/Videos/" + movieName + ".mkv", flipVert=False , colorSpace='rgb')
+#    mov = visual.MovieStim(win, filename = "../Asset/Videos/" + movieName + ".mp4", flipVert=False)
+    while mov.status != visual.FINISHED:
+        mov.draw()
+        win.flip()
+        intrupt = event.getKeys(['q'])
+        if 'q' in intrupt:
+            break
+
+
 def Instruction(win,usrInfo):
-    displayImg(win,'Intro_' + usrInfo[7],0,instr=True,size=None,pos=None)
+#    if (usrInfo[7] == "Child"):
+#        playVideo(win,'introsheeps')
+
+    displayImg(win,'Intro' + usrInfo[7],0,instr=True,size=None,pos=None)
     event.waitKeys(keyList=['space'] , clearEvents = True)
     
 #    playFeedbackVoice(win)
@@ -342,6 +359,7 @@ def fixation(win,duration):
 
     
 def stimulus(win,dot_stim,square_1,square_2):
+    
     square_1.autoDraw = True
     square_2.autoDraw = True
     dot_stim.dir = np.random.choice((180,0))
@@ -356,16 +374,24 @@ def stimulus(win,dot_stim,square_1,square_2):
         win.flip()
         er_t = timer.getTime() - er_t
         if 'z' in keys or 'slash' in keys:
+            respons = keys
             break
     square_1.autoDraw = False
     square_2.autoDraw = False
-    return keys[0] , keys[0].rt - er_t
+    return keys[0] , keys[0].rt - er_t , respons
 
-def Feedback(win , key , Rt , dot_stim , usrInfo):
+def Trial_feedback(win , key , Rt , dot_stim , usrInfo):
     corr = False
     corr_RT = 0
     icorr_RT = 0
+    
+    if(dot_stim.dir == 0):
+        corrAns = 'Right'
+    else:
+        corrAns = 'Left'
+    
     if( not Rt >= Too_late and not Rt <= Too_soon ):
+        Speed = "Normal"
         if(dot_stim.dir == 0):
             if (key.name=='z'):
                 playSound(0,"End_trial/Wrong")
@@ -388,15 +414,17 @@ def Feedback(win , key , Rt , dot_stim , usrInfo):
                 corr_RT = Rt
     else:
         if (Rt >= Too_late):
+            Speed = "Slow"
             playSound(0,"End_trial/Too_slow")
             displayImg(win , '2late_' + usrInfo[7] , Too_LateorSoon_dur , False, None, None )
             icorr_RT = Rt
         elif (Rt<= Too_soon):
+            Speed = "Fast"
             playSound(0,"End_trial/Too_Fast")
             displayImg(win , '2soon_' + usrInfo[7] , Too_LateorSoon_dur , False, None, None )
             icorr_RT = Rt
             
-    return corr , corr_RT , icorr_RT
+    return corr , corr_RT , icorr_RT , Speed , corrAns
 """
 EZ-Diffusion model
 Input :
@@ -447,20 +475,23 @@ def training_phase(win,dot_stim,usrInfo,square_1,square_2):
     Ncor_a = 0
     qualified = False
     for j in range(Trainning_phase_blocks):
-        while(not qualified):
-            for i in range(Trainning_phase_trials):
-                # Fixation -> stimulus -> Feedback -> ITI
-                fixation(win,Fixation_dur)
-                key , Rt = stimulus(win,dot_stim,square_1 , square_2)
-                corr, _ , _ = Feedback(win , key , Rt , dot_stim , usrInfo)
-                ITI(win , ITI_dur)
-                
-                if (corr) : 
-                    Ncor_a +=1
-                elif (not corr and Ncor_a != correct_sequence):
-                    Ncor_a = 0
-                if (Ncor_a >= correct_sequence):
-                    qualified = True
+#        while(not qualified):
+        for i in range(Trainning_phase_trials):
+            # Fixation -> stimulus -> Feedback -> ITI
+            fixation(win,Fixation_dur)
+            key , Rt , _ = stimulus(win,dot_stim,square_1 , square_2)
+            corr, _ , _ ,_ , _ = Trial_feedback(win , key , Rt , dot_stim , usrInfo)
+            ITI(win , ITI_dur)
+            
+            if (corr) : 
+                Ncor_a +=1
+            elif (not corr and Ncor_a != correct_sequence):
+                Ncor_a = 0
+            if (Ncor_a >= correct_sequence):
+                qualified = True
+        if (not qualified):
+            Finish(win)
+            core.quit()
 
 def test_phase(win,dot_stim,usrInfo,square_1,square_2):
     #test phase 40 trial
@@ -483,16 +514,41 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
     denominator = []
     otherRewardRates = []
     
+    
+    
+    CorrAns = []
+    RTime = []
+    userSpeed = []
+    Trial = []
+    CatNum = []
+    userAns = []
+    Acc = []
+    Mean_mrt = []
+    Best_mrt = []
+    Mean_pc = [] 
+    Best_pc = []
+    bestReward = [] 
+    userReward = []
     timer = core.Clock()
     for block_c in range(1 , Test_phase_blocks+1):
         Ncor_a = 0
         Nicor_a = 0
         s_time = timer.getTime()
         for trial_c in range(1 , Test_phase_trials+1):
+            CatNum.append(block_c)
             # Fixation -> stimulus -> Feedback -> ITI
             fixation(win,Fixation_dur)
-            key , Rt = stimulus(win,dot_stim,square_1 , square_2)
-            corr, corr_RT , icorr_RT = Feedback(win , key , Rt , dot_stim , usrInfo)
+            key , Rt , responskey = stimulus(win,dot_stim,square_1 , square_2)
+            RTime.append(Rt)
+            if 'z' in responskey:
+                userAns.append('Left')
+            else:
+                userAns.append('Right')
+                
+            corr, corr_RT , icorr_RT ,Speed , corrAns = Trial_feedback(win , key , Rt , dot_stim , usrInfo)
+            userSpeed.append(Speed)
+            CorrAns.append(corrAns)
+            
             if (corr_RT != 0) :
                 corr_rt.append(corr_RT)
             if (icorr_RT != 0) :
@@ -502,8 +558,12 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             
             if (corr) : 
                 Ncor_a +=1
+                Acc.append(1)
             else :
                 Nicor_a +=1
+                Acc.append(0)
+                
+            Trial.append(trial_c)
         trial_time = timer.getTime() - s_time
         timeStatdic['block'] = block_c 
         timeStatdic['trial_time'] = trial_time
@@ -558,16 +618,16 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             if (Pc == 0.5):
                 Pc = 0.5 + (1/(2*Test_nBlock_bound))
             if (Pc == 0):
-                Pc = 0 + (1/(2*Test_nBlock_bound))
-            print(" -more- " , corr_rt[-Test_nBlock_bound:], "--" , VRT)
+                Pc =  (1/(2*Test_nBlock_bound))
             v,a,Ter = EZ_Diffusion(Pc, VRT, MRT, S=stoch_s)
             
             score_corr, score_time = 0 , 0 
             score_list.clear()
-            
-        for i in np.arange (0.001,1,0.001):
-            otherAoptions.append(i)
         
+
+        otherAoptions = np.arange (0.001,1,0.001)
+            
+
         for i in range(len(otherAoptions)):
             otherPcs.append(1 / (1 + np.exp(((- otherAoptions[i] *  v) / np.power(stoch_s,2)))))
             otherVRTs.append((((otherAoptions[i]*np.power(stoch_s,2))/(2*np.power(v,3)))*(((2*((-v*otherAoptions[i])/np.power(stoch_s,2))*np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2))))-(np.exp(2*((-v*otherAoptions[i])/np.power(stoch_s,2))))+1)/np.power((np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2)))+1),2))))
@@ -579,7 +639,10 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         bestRewardRate = max(otherRewardRates)
         numerator.clear()
         denominator.clear()
-        
+#        otherPcs.clear()
+#        otherVRTs.clear()
+#        otherMRTs.clear()
+#        otherRewardRates.clear()        
         RRnum = 0
         RRden = 0
         
@@ -590,8 +653,6 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         print(" bestRewardRate " , bestRewardRate , "\n rewardRate " , rewardRate)
         
         #feedback
-        print("len otherAoptions" , len(otherAoptions))
-        print("otherRewardRates" , len(otherRewardRates))
         for i in range (len(otherAoptions)) :
             if(bestRewardRate == otherRewardRates[i]):
                 positionOfBestRR = i
@@ -624,13 +685,20 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         MRTdiff = float(format(MRTdiff,".3f"))
         print("meanPc " , meanPc , " bestRR_Pc ", bestRR_Pc)
         Pcdiff = meanPc - bestRR_Pc
+        for i in range (Test_phase_trials):
+            Mean_mrt.append(meanMRT)
+            Best_mrt.append(bestRR_MRT)
+            Mean_pc.append(meanPc)
+            Best_pc.append(bestRR_Pc)
+            bestReward.append(bestRewardRate)
+            userReward.append(rewardRate)
         Pcdiff = Pcdiff * 100
         Pcdiff = float(format(Pcdiff,".3f"))
         
         correctResponsesDiffPerMin = ((nCorrectResponses/experimentMins) - (potentialNCorrectResponses/potentialExperimentMins))
         
         print("MRTdiff , " , MRTdiff , " Pcdiff , " , Pcdiff)
-        if (bestRewardRate <= rewardRate) :
+        if (bestRewardRate >= rewardRate) :
             if(Pcdiff > 0 and MRTdiff > 0): #3
                 type_acc = "More"
                 type_speed = "Less"
@@ -647,7 +715,6 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
                 Pcdiff = Pcdiff * -1
                 type_acc = "Less"
                 type_speed = "Less"
-                meanMRT = float(format(meanMRT,".3f"))
                 
                 #        elif(abs(Pcdiff) <= efficient_thrsh and MRTdiff < 0): #4
                 #            MRTdiff = MRTdiff * -1
@@ -676,10 +743,11 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         else:
             type_acc = "Suff"
             type_speed = "Suff"
-                        
+            
         correctResponsesDiffPerMin = correctResponsesDiffPerMin * -1
         MRTpercent = (MRTdiff/meanMRT)*100
         pointsPerMin = nCorrectResponses/experimentMins
+        meanMRT = float(format(meanMRT,".3f"))               
         nCorrectResponses = float(format(nCorrectResponses,".2f")) #. 
         experimentMins = float(format(experimentMins,".3f")) #. 
         pointsPerMin = float(format(pointsPerMin,".3f")) #. 
@@ -697,12 +765,103 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin)
         event.waitKeys(keyList=['space'] , clearEvents = True)
 
-        # load feeback image with numbers ->baham
-        # laod related voice -> man
-        
-        #save data ->hoda
+
+    SaveDate(usrInfo , Trial , CatNum , CorrAns  , userAns , RTime ,
+    Acc , userSpeed ,coherence , nDots,  Correct_feedback_dur , 
+    ITI_dur  , Wrong_feedback_dur ,Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward)
         
 def Finish(win):
     displayImg(win,'thanks',0,instr=True,size=None,pos=None)
     playSound(None,"End_thanks/Thanks")
     
+def Index_check(arr , maxim):
+    for i in range(maxim-len(arr)) :
+        arr.append(' ')  
+        
+def SaveDate(UsrInfo , Trial , CatNum , CorrAns  , userAns , RTime , Acc , 
+userSpeed ,Coherence , numberofDots,  FeedbackTime , ITI  , ErrorTimeout ,
+Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward):
+    Id = []
+    Name = []
+    LastName = []
+    Age = []
+    Gender = []
+    DomHand = []
+    Type = []
+    Adult_Child = []
+    coh = []
+    dot_num = []
+    iti = []
+    FDtime = []
+    Errtime = []
+    
+    usrNum, usrName , usrLastName , usrAge , usrGender ,usrHand , taskType , usrType = UsrInfo
+    maxim = max(len(Trial),len(CatNum),len(CorrAns),len(Acc),len(RTime),len(userAns) , len(userSpeed) , 
+    len(Mean_mrt) , len(Best_mrt) ,len(Mean_pc) ,len(Best_pc) , len(bestReward), len(userReward))
+    for i in range (maxim):
+        Id.append(usrNum)
+        Name.append('') 
+        LastName.append('') 
+        Age.append('') 
+        Gender.append('') 
+        DomHand.append('')
+        Type.append('')
+        Adult_Child.append('')
+        coh.append(Coherence)
+        dot_num.append(numberofDots)
+        iti.append(ITI)
+        FDtime.append(FeedbackTime)
+        Errtime.append(ErrorTimeout)
+    
+    Name[0] = usrName
+    LastName[0] = usrLastName
+    Age[0] = usrAge
+    Gender[0] = usrGender
+    DomHand[0] = usrHand
+    Type[0] = taskType
+    Adult_Child[0] = usrType
+    if ( ( len(Trial),len(CatNum),len(CorrAns),len(Acc),len(RTime),len(userAns) , len(userSpeed) ,
+    len(Mean_mrt) , len(Best_mrt) ,len(Mean_pc) ,len(Best_pc) , len(bestReward), len(userReward)/ 13) != maxim ):
+        l = [Trial,CatNum , CorrAns , Acc ,RTime , userAns , userSpeed , Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward]
+        for ind_l in l:
+            Index_check(ind_l,maxim)
+    data_dict = {
+    "Subject.num" : Id ,
+    "Subject.name" : Name ,
+    "Subject.surName" : LastName ,
+    "Age" : Age ,
+    "Gender" : Gender ,
+    "Handedness" : DomHand,
+    "Subject.Type" : Adult_Child , 
+    "FeedbackType" : Type ,
+    "Trial" : Trial ,
+    "Category.number" :CatNum ,
+    "Correct.answer" : CorrAns , 
+    "Acuuracy" : Acc ,
+    "R_time" : RTime ,
+    "User_answer" : userAns ,
+    "User_speed" : userSpeed ,
+    "Coherence" : coh ,
+    "numberofDots"  : dot_num ,
+    "ErrorTimeout" : Errtime ,
+    "FeedbackTime" : FDtime , 
+    "ITI": iti ,
+    "Mean_MRT" : Mean_mrt ,
+    "Best_MRT" : Best_mrt ,
+    "Mean_PC" : Mean_pc ,
+    "Best_PC" : Best_pc ,
+    "Best_Reward_rate" : bestReward ,
+    "Reward_rate" : userReward
+
+    
+    }
+    
+    UserInfoDF = pd.DataFrame(data_dict,columns= ['Subject.num','Subject.name','Subject.surName','Age' , 'Gender' , 'Handedness' , 
+    'Subject.Type' , 'FeedbackType' , 'Trial','Category.number'
+    ,'Correct.answer','Acuuracy' ,'R_time' , 'User_answer','User_speed' ,
+    "Coherence" , "numberofDots" ,  "ErrorTimeout" , "FeedbackTime" , "ITI" , 
+    "Mean_MRT" ,"Best_MRT"  ,"Mean_PC"  ,"Best_PC"  ,"Best_Reward_rate"  ,"Reward_rate"
+    
+    ])
+    dir_csv = "../Output_File/"
+    UserInfoDF.to_csv( dir_csv + str(datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))+"__" + str(usrName) + '_' + str(usrNum) + '.csv' ,index=False,header=True , line_terminator='\r\n')
