@@ -41,6 +41,35 @@ def getUserInfo():
     
     return [listInfo , again]
 
+
+def select_gif(diff,Type):
+    diff = diff * 100
+    upper_bound = 5
+    lower_bound = 2.5
+    
+    if (abs(diff) >= 0. and abs(diff) < 0.625):
+        gif_n = 0
+    elif(abs(diff) >= 0.625 and abs(diff) < 2.5):
+        gif_n = 1
+    elif(abs(diff) >= 97.5 and abs(diff) < 99.375):
+        gif_n = 40
+    elif(abs(diff) >= 99.375 and abs(diff) < 100):
+        gif_n = 41
+    else:
+        gif_n = 1
+        while(lower_bound != 95 and upper_bound != 97.5):
+            if(abs(diff) >= lower_bound and abs(diff)< upper_bound):
+                gif_n += 1
+                break
+            else:
+                gif_n +=1
+                lower_bound += 2.5
+                upper_bound +=  2.5
+                
+    gif_dir = Type +"_"+ str(gif_n)
+    print(gif_dir)
+    
+    
 def UserInfo():
     usrInfo , again = getUserInfo()
     while(again):
@@ -151,20 +180,20 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
     windows.flip()
     
     #fixed 
-#    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (nCorRes)
-#    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (exptMins)
-#    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (pointsPerMin)
-#    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (math.floor(pointsPerMin/5))
-#    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
+    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
+    play_encode_num (nCorRes)
+    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
+    play_encode_num (exptMins)
+    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
+    play_encode_num (pointsPerMin)
+    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
+    play_encode_num (math.floor(pointsPerMin/5))
+    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
     
-#    if(feedb_pic_dir[:2] == "LF"):
-#        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
-#    else:
-#        playSound(None ,"HF_" + feedb_pic_dir[3:8] + "/" +  feedb_pic_dir )
+    if(feedb_pic_dir[:2] == "LF"):
+        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
+    else:
+        playSound(None ,"HF_" + feedb_pic_dir[3:8] + "/" +  feedb_pic_dir )
         
     windows.color = [-1,-1,-1]
 
@@ -197,11 +226,7 @@ def playFeedbackGif(windows , movieNamel , movieNamer ):
             
                
                 break
-#            if(movr.status == visual.FINISHED):
-#                while(movl.status != visual.FINISHED):
-#                    core.wait(0.5)
-#                    movl.draw()
-#                    windows.flip()
+
     else:
         while(movr.status != visual.FINISHED):
             movr.draw()
@@ -225,11 +250,6 @@ def playFeedbackGif(windows , movieNamel , movieNamer ):
                 
                 break
                 
-#            if(movl.status == visual.FINISHED):
-#                while(movr.status != visual.FINISHED):
-#                    core.wait(0.5)
-#                    movr.draw()
-#                    windows.flip()
     windows.flip()
     core.wait(2)
 
@@ -243,7 +263,6 @@ def playSound(duration,soundName):
     if(duration == None ):
         duration = c4.duration
     c4.play()
-#    c4.setSound(value = 500 , secs=duration)
     core.wait(duration)
 
     
@@ -262,7 +281,7 @@ def Instruction(win,usrInfo):
 #    if (usrInfo[7] == "Child"):
 #        playVideo(win,'introsheeps')
 
-    displayImg(win,'Intro' + usrInfo[7],0,instr=True,size=None,pos=None)
+    displayImg(win,'Intro_' + usrInfo[7],0,instr=True,size=None,pos=None)
     event.waitKeys(keyList=['space'] , clearEvents = True)
     
 #    playFeedbackVoice(win)
@@ -334,7 +353,6 @@ def displayImg(win ,imgName , duration , instr, size, pos ):
         img = visual.ImageStim(
         win = win,
         image = "../Asset/Pics/" + imgName + ".PNG" ,
-#        size=(size[0], size[1]),
         pos=(pos[0], pos[1]) 
         )
     if instr :
@@ -475,7 +493,6 @@ def training_phase(win,dot_stim,usrInfo,square_1,square_2):
     Ncor_a = 0
     qualified = False
     for j in range(Trainning_phase_blocks):
-#        while(not qualified):
         for i in range(Trainning_phase_trials):
             # Fixation -> stimulus -> Feedback -> ITI
             fixation(win,Fixation_dur)
@@ -625,7 +642,9 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             score_list.clear()
         
 
-        otherAoptions = np.arange (0.001,1,0.001)
+#        otherAoptions = np.arange (0.001,1,0.001)
+        for i in np.arange (0.001,1,0.001):
+            otherAoptions.append(i)
             
 
         for i in range(len(otherAoptions)):
@@ -639,10 +658,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         bestRewardRate = max(otherRewardRates)
         numerator.clear()
         denominator.clear()
-#        otherPcs.clear()
-#        otherVRTs.clear()
-#        otherMRTs.clear()
-#        otherRewardRates.clear()        
+        
         RRnum = 0
         RRden = 0
         
@@ -685,13 +701,22 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         MRTdiff = float(format(MRTdiff,".3f"))
         print("meanPc " , meanPc , " bestRR_Pc ", bestRR_Pc)
         Pcdiff = meanPc - bestRR_Pc
+
         for i in range (Test_phase_trials):
-            Mean_mrt.append(meanMRT)
-            Best_mrt.append(bestRR_MRT)
-            Mean_pc.append(meanPc)
-            Best_pc.append(bestRR_Pc)
-            bestReward.append(bestRewardRate)
-            userReward.append(rewardRate)
+            if (i == Test_phase_trials-1):
+                Mean_mrt.append(meanMRT)
+                Best_mrt.append(bestRR_MRT)
+                Mean_pc.append(meanPc)
+                Best_pc.append(bestRR_Pc)
+                bestReward.append(bestRewardRate)
+                userReward.append(rewardRate)
+            else :
+                Mean_mrt.append("-")
+                Best_mrt.append("-")
+                Mean_pc.append("-")
+                Best_pc.append("-")
+                bestReward.append("-")
+                userReward.append("-")
         Pcdiff = Pcdiff * 100
         Pcdiff = float(format(Pcdiff,".3f"))
         
@@ -743,6 +768,9 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         else:
             type_acc = "Suff"
             type_speed = "Suff"
+        
+        select_gif(MRTdiff,type_speed)
+        select_gif(Pcdiff,type_acc)
             
         correctResponsesDiffPerMin = correctResponsesDiffPerMin * -1
         MRTpercent = (MRTdiff/meanMRT)*100
