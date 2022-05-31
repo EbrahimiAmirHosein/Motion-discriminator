@@ -1,6 +1,6 @@
 from psychopy import visual , core , event 
 from Parameters import*
-from Helper import *
+from Utils import *
 
  
 usrInfo = UserInfo()
