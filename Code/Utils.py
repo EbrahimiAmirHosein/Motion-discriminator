@@ -748,12 +748,12 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         correctResponsesDiffPerMin = correctResponsesDiffPerMin * -1
         MRTpercent = (MRTdiff/meanMRT)*100
         pointsPerMin = nCorrectResponses/experimentMins
-        meanMRT = float(format(meanMRT,".3f"))               
-        nCorrectResponses = float(format(nCorrectResponses,".2f")) #. 
-        experimentMins = float(format(experimentMins,".3f")) #. 
-        pointsPerMin = float(format(pointsPerMin,".3f")) #. 
-        correctResponsesDiffPerMin = float(format(correctResponsesDiffPerMin,".3f"))
-        meanMRT = float(format(meanMRT,".3f"))
+        meanMRT = float(format(meanMRT,".0f"))               
+        nCorrectResponses = float(format(nCorrectResponses,".0f")) #. 
+        experimentMins = float(format(experimentMins,".0f")) #. 
+        pointsPerMin = float(format(pointsPerMin,".0f")) #. 
+        correctResponsesDiffPerMin = float(format(correctResponsesDiffPerMin,".0f"))
+        meanMRT = float(format(meanMRT,".0f"))
         
         
         # load gifs
