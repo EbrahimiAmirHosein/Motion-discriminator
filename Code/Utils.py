@@ -42,33 +42,53 @@ def getUserInfo():
     return [listInfo , again]
 
 
-def select_gif(diff,Type):
-    diff = diff * 100
-    upper_bound = 5
-    lower_bound = 2.5
-    
-    if (abs(diff) >= 0. and abs(diff) < 0.625):
-        gif_n = 0
-    elif(abs(diff) >= 0.625 and abs(diff) < 2.5):
-        gif_n = 1
-    elif(abs(diff) >= 97.5 and abs(diff) < 99.375):
-        gif_n = 40
-    elif(abs(diff) >= 99.375 and abs(diff) < 100):
+def select_gif(diff , Type , status):
+
+
+    if(status == "p"):
+        if(abs(diff) - 1 < 0):
+            gif_n = np.round(abs(diff ) * 18)
+        else:
+            gif_n = np.round(((abs(diff) - 1 )/2)*18 + 23)
+        
+    if(status == "s"):
+        if(abs(diff) - 1 < 0):
+            gif_n =abs(np.round((abs(diff))*(-18) + 41  ))
+        else:
+            gif_n =abs( 18 - int(np.round(((abs(diff) - 1 )/2)*18)))
+    if(gif_n > 41 ):
         gif_n = 41
-    else:
-        gif_n = 1
-        while(lower_bound != 95 and upper_bound != 97.5):
-            if(abs(diff) >= lower_bound and abs(diff)< upper_bound):
-                gif_n += 1
-                break
+    if(gif_n < 0):
+        gif_n = 0
+    if(gif_n == 22):
+        gif_n = 23
+    if(gif_n == 19):
+        gif_n = 18
+        
+    if(Type == "Suff"):
+        if(status == "p"):
+            if(abs(diff) - 1 < 0):
+                gif_n = np.round(abs(diff ) * 1 + 19)
             else:
-                gif_n +=1
-                lower_bound += 2.5
-                upper_bound +=  2.5
+                gif_n = np.round(((abs(diff) - 1) / 2 )*1 + 22)
+            
+        if(status == "s"):
+            if(abs(diff) - 1 < 0):
+                gif_n = np.round(((abs(diff)))*(-1) + 22)
+            else:
+                gif_n =abs(19 -  np.round((abs(diff) - 1 )/2 * 19))
+            
+            
+            
+        if(gif_n > 22):
+            gif_n = 22
+        if(gif_n < 19):
+            gif_n = 19
+            
                 
     gif_dir = Type +"_"+ str(gif_n)
-    print(gif_dir)
-    
+
+    return int(gif_n)
     
 def UserInfo():
     usrInfo , again = getUserInfo()
@@ -96,15 +116,15 @@ def play_encode_num (number):
     if number > 20 and (number%10 != 0) :
         a1 = int(number / 10)
         a2 = number % 10
-        playSound(None,"numbers/" + str(a1 * 10) + "_" )
-        playSound(None,"numbers/" + str(int(a2)))
+        playSound(None,"numbers/o" + str(a1 * 10) + "_" )
+        playSound(None,"numbers/o" + str(int(a2)))
     else:
-        playSound(None,"numbers/" + str(int(number))  )
+        playSound(None,"numbers/o" + str(int(number))  )
         
 
     
     
-def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
+def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb ):
     
     if (feedb_pic_dir[3:8] == "Adult"):
         positions = [(0.29,0.34),(0.12,0.34),(-0.42,0.34),(0.5,0.24)]
@@ -119,16 +139,17 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
         win = windows,
         image = "../Asset/Pics/" + feedb_pic_dir + ".PNG" 
         )
-#    Left_img = visual.ImageStim(
-#        win = windows,
-#        image = "../Asset/Pics/" + "L1" + ".PNG" ,
-#        pos=(-770 , 0)
-#        )
-#    Right_img = visual.ImageStim(
-#        win = windows,
-#        image = "../Asset/Pics/" + "R1" + ".PNG" ,
-#        pos=(770 , 0)
-#        )
+    Left_img = visual.ImageStim(
+        win = windows,
+        image = "../Asset/Pics/left - speed result/" + lrfeedb[0] + ".PNG" ,
+        pos=(-800 , 0)
+        )
+    Right_img = visual.ImageStim(
+        win = windows,
+        image = "../Asset/Pics/right -accuracy result/" + lrfeedb[1] + ".PNG" ,
+        pos=(800 , 0)
+        )
+
     
     txt_nCorRes = visual.TextBox(
         window=windows,
@@ -171,8 +192,8 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
         grid_horz_justification='center',
         units='norm')
     img.draw()
-#    Left_img.draw()
-#    Right_img.draw()
+    Left_img.draw()
+    Right_img.draw()
     txt_nCorRes.draw()
     txt_exptMins.draw()
     txt_pointsPerMin.draw()
@@ -198,64 +219,6 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin):
     windows.color = [-1,-1,-1]
 
 
-
-    
-def playFeedbackGif(windows , movieNamel , movieNamer ):
-
-    
-    movl = visual.MovieStim3(win = windows, filename = "../Asset/gifs/left/" + movieNamel+ ".gif", flipVert=False , colorSpace='rgb'  , pos=(-500 , 0))
-    movr = visual.MovieStim3(win = windows, filename = "../Asset/gifs/right/" + movieNamer + ".gif", flipVert=False , colorSpace='rgb'  , pos=(500 , 0))
-    print(movieNamel,movieNamer)
-    print(movl.duration,movr.duration)
-    if (movl.duration > movr.duration) :
-        while(movl.status != visual.FINISHED):
-            movl.draw()
-            movr.draw()
-            windows.flip()
-            if(movr.status == visual.FINISHED):
-                movr.seek(movr.duration - 0.2)
-                movr.draw()
-                movl.draw()
-                windows.flip()
-            if(movl.status == visual.FINISHED and movr.status == visual.FINISHED):
-                movl.seek(movl.duration - 0.2)
-                movr.seek(movr.duration - 0.2)
-                movl.draw()
-                movr.draw()
-                windows.flip()
-            
-               
-                break
-
-    else:
-        while(movr.status != visual.FINISHED):
-            movr.draw()
-            movl.draw()
-            windows.flip()
-            if(movl.status == visual.FINISHED):
-                movl.seek(movl.duration - 0.2)
-                movr.draw()
-                movl.draw()
-                windows.flip()
-            if(movl.status == visual.FINISHED and movr.status == visual.FINISHED):
-
-
-                movl.seek(movl.duration - 0.2)
-                movr.seek(movr.duration - 0.2)
-                movl.draw()
-                movr.draw()
-                
-                windows.flip()
-               
-                
-                break
-                
-    windows.flip()
-    core.wait(2)
-
-    
-    
-
     
 def playSound(duration,soundName):
 
@@ -267,7 +230,7 @@ def playSound(duration,soundName):
 
     
 def playVideo(win,movieName):
-    mov = visual.MovieStim3(win, filename = "../Asset/Videos/" + movieName + ".mkv", flipVert=False , colorSpace='rgb')
+    mov = visual.MovieStim3(win, filename = "../Asset/Videos/" + movieName + ".mp4", flipVert=False , colorSpace='rgb',size=(widthPix,heightPix))
 #    mov = visual.MovieStim(win, filename = "../Asset/Videos/" + movieName + ".mp4", flipVert=False)
     while mov.status != visual.FINISHED:
         mov.draw()
@@ -278,16 +241,16 @@ def playVideo(win,movieName):
 
 
 def Instruction(win,usrInfo):
-#    if (usrInfo[7] == "Child"):
-#        playVideo(win,'introsheeps')
-
+    if (usrInfo[7] == "Child"):
+        playVideo(win,'introsheeps')
+        
+    win.color = [1,1,1]
+    win.flip()
     displayImg(win,'Intro_' + usrInfo[7],0,instr=True,size=None,pos=None)
+    win.color = [-1,-1,-1]
     event.waitKeys(keyList=['space'] , clearEvents = True)
     
-#    playFeedbackVoice(win)
-#    playFeedbackGif(win , 'lg28' , 'lg28')
-#    core.wait(2)
-#    core.quit()
+
     
 def set_window(screen_size,color):
 
@@ -299,7 +262,7 @@ def set_window(screen_size,color):
         Cwin = [0,0,0]
         
     win = visual.Window(
-    monitor=mon,
+#    monitor=mon,
     size = screen_size,
     fullscr = True,
     units = "pix" , 
@@ -387,13 +350,15 @@ def stimulus(win,dot_stim,square_1,square_2):
     timer = core.Clock()
     while(True):
         er_t = timer.getTime()
-        keys = kb.getKeys(['z' , 'slash'] , waitRelease=True)
+        keys = kb.getKeys(['z' , 'slash' , 'q'] , waitRelease=False)
         dot_stim.draw()
         win.flip()
         er_t = timer.getTime() - er_t
         if 'z' in keys or 'slash' in keys:
             respons = keys
             break
+        if 'q' in keys :
+            core.quit()
     square_1.autoDraw = False
     square_2.autoDraw = False
     return keys[0] , keys[0].rt - er_t , respons
@@ -435,12 +400,12 @@ def Trial_feedback(win , key , Rt , dot_stim , usrInfo):
             Speed = "Slow"
             playSound(0,"End_trial/Too_slow")
             displayImg(win , '2late_' + usrInfo[7] , Too_LateorSoon_dur , False, None, None )
-            icorr_RT = Rt
+            icorr_RT = Rt 
         elif (Rt<= Too_soon):
             Speed = "Fast"
             playSound(0,"End_trial/Too_Fast")
             displayImg(win , '2soon_' + usrInfo[7] , Too_LateorSoon_dur , False, None, None )
-            icorr_RT = Rt
+            icorr_RT = Rt + Too_soon
             
     return corr , corr_RT , icorr_RT , Speed , corrAns
 """
@@ -457,8 +422,7 @@ Returns :
 
 def EZ_Diffusion(Pc, VRT, MRT, S):
     
-    if (VRT == 0) : 
-        VRT = 0.01
+
     # The default value for the scaling parameter s equals 0.1
     s2 = S**2
     L = logistic.ppf(Pc)
@@ -523,6 +487,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
     corr_rt = []
     icorr_rt = []
     
+    
     otherAoptions = []
     otherPcs = []
     otherVRTs = []
@@ -533,54 +498,55 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
     
     
     
-    CorrAns = []
-    RTime = []
-    userSpeed = []
-    Trial = []
-    CatNum = []
-    userAns = []
-    Acc = []
-    Mean_mrt = []
-    Best_mrt = []
-    Mean_pc = [] 
-    Best_pc = []
-    bestReward = [] 
-    userReward = []
+    CorrAns_csv = []
+    RTime_csv = []
+    userSpeed_csv = []
+    Trial_csv = []
+    CatNum_csv = []
+    userAns_csv = []
+    Acc_csv = []
+    Mean_mrt_csv = []
+    Best_mrt_csv = []
+    Mean_pc_csv = [] 
+    Best_pc_csv = []
+    bestReward_csv = [] 
+    userReward_csv = []
+    
     timer = core.Clock()
     for block_c in range(1 , Test_phase_blocks+1):
         Ncor_a = 0
         Nicor_a = 0
         s_time = timer.getTime()
         for trial_c in range(1 , Test_phase_trials+1):
-            CatNum.append(block_c)
+            CatNum_csv.append(block_c)
             # Fixation -> stimulus -> Feedback -> ITI
             fixation(win,Fixation_dur)
             key , Rt , responskey = stimulus(win,dot_stim,square_1 , square_2)
-            RTime.append(Rt)
+            RTime_csv.append(Rt)
             if 'z' in responskey:
-                userAns.append('Left')
+                userAns_csv.append('Left')
             else:
-                userAns.append('Right')
+                userAns_csv.append('Right')
                 
             corr, corr_RT , icorr_RT ,Speed , corrAns = Trial_feedback(win , key , Rt , dot_stim , usrInfo)
-            userSpeed.append(Speed)
-            CorrAns.append(corrAns)
+            userSpeed_csv.append(Speed)
+            CorrAns_csv.append(corrAns)
             
             if (corr_RT != 0) :
                 corr_rt.append(corr_RT)
             if (icorr_RT != 0) :
-                icorr_rt.append(icorr_RT)
+                corr_rt.append(icorr_RT)
                 
             ITI(win  , ITI_dur) #interTrialInterval
             
             if (corr) : 
                 Ncor_a +=1
-                Acc.append(1)
+                Acc_csv.append(1)
             else :
                 Nicor_a +=1
-                Acc.append(0)
+                Acc_csv.append(0)
                 
-            Trial.append(trial_c)
+            Trial_csv.append(trial_c)
         trial_time = timer.getTime() - s_time
         timeStatdic['block'] = block_c 
         timeStatdic['trial_time'] = trial_time
@@ -589,7 +555,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         
 
         #less than 200 trials    
-        if (block_c <= Test_nBlock_bound):
+        if (block_c <= Test_nBlock_bound ):
             trialsBack = block_c * Test_phase_trials
             for items in timeStat :
                 score_corr+=items['Ncor_a']
@@ -617,47 +583,54 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             
         #each 200 trials    
         else :
-            trialsBack = Test_nBlock_bound
+            trialsBack = Test_nBlock_bound * Test_phase_trials
             for i in range (block_c - Test_nBlock_bound , len(timeStat) ) :
                 score_corr+=timeStat[i]['Ncor_a']
                 score_time+=timeStat[i]['trial_time']
             score_list.append((score_corr * 60 / score_time , score_time)) #accuracy + timespent 
              
             if (len(corr_rt)!=0):
-                VRT = np.asarray(corr_rt[-Test_nBlock_bound:]).var()
-                MRT = np.asarray(corr_rt[-Test_nBlock_bound:]).mean()
+                VRT = np.asarray(corr_rt[-trialsBack:]).var()
+                MRT = np.asarray(corr_rt[-trialsBack:]).mean()
             else:
                 VRT = epsilon
                 MRT = epsilon
-            Pc =  score_corr / (Test_nBlock_bound)
+            Pc =  score_corr / (trialsBack)
             if (Pc == 1):
-                Pc = 1 - (1/(2*Test_nBlock_bound))
+                Pc = 1 - (1/(2*trialsBack))
             if (Pc == 0.5):
-                Pc = 0.5 + (1/(2*Test_nBlock_bound))
+                Pc = 0.5 + (1/(2*trialsBack))
             if (Pc == 0):
-                Pc =  (1/(2*Test_nBlock_bound))
+                Pc =  (1/(2*trialsBack))
             v,a,Ter = EZ_Diffusion(Pc, VRT, MRT, S=stoch_s)
             
             score_corr, score_time = 0 , 0 
             score_list.clear()
         
-
+        timeStatdic = { 'otherRewardRates' : 0,
+                        'otherMRTs' : 0,
+                        'otherPcs' : 0}
 #        otherAoptions = np.arange (0.001,1,0.001)
         for i in np.arange (0.001,1,0.001):
             otherAoptions.append(i)
             
-
+        otherPcs.clear()
+        otherVRTs.clear()
+        otherMRTs.clear()
+        otherRewardRates.clear()
+        numerator.clear()
+        denominator.clear()
+      
         for i in range(len(otherAoptions)):
-            otherPcs.append(1 / (1 + np.exp(((- otherAoptions[i] *  v) / np.power(stoch_s,2)))))
+            otherPcs.append(get_opt_acc(otherAoptions[i],v))
             otherVRTs.append((((otherAoptions[i]*np.power(stoch_s,2))/(2*np.power(v,3)))*(((2*((-v*otherAoptions[i])/np.power(stoch_s,2))*np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2))))-(np.exp(2*((-v*otherAoptions[i])/np.power(stoch_s,2))))+1)/np.power((np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2)))+1),2))))
-            otherMRTs.append((((otherAoptions[i]/(2*v))*(1-np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2))))/(1+np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2))))) + Ter))
+            otherMRTs.append(get_opt_speed(otherAoptions[i],v,Ter))                  
             numerator.append(otherPcs[i]*trialsBack)
             denominator.append((otherMRTs[i]+(ITI_dur)+(Correct_feedback_dur)+((1-otherPcs[i])*(Wrong_feedback_dur)))*trialsBack)
             otherRewardRates.append(numerator[i]/denominator[i])
             
         bestRewardRate = max(otherRewardRates)
-        numerator.clear()
-        denominator.clear()
+
         
         RRnum = 0
         RRden = 0
@@ -666,7 +639,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         RRden = ((MRT+(ITI_dur)+(Correct_feedback_dur)+((1-Pc)*(Wrong_feedback_dur)))*trialsBack)
         rewardRate=RRnum/RRden
         
-        print(" bestRewardRate " , bestRewardRate , "\n rewardRate " , rewardRate)
+     
         
         #feedback
         for i in range (len(otherAoptions)) :
@@ -695,34 +668,33 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         
         experimentMins = RRden/60
         potentialExperimentMins = actualPotentialTime/60
-        
-        print("meanMRT " , meanMRT , " bestRR_MRT ", bestRR_MRT)
+    
+
         MRTdiff = meanMRT - bestRR_MRT
         MRTdiff = float(format(MRTdiff,".3f"))
-        print("meanPc " , meanPc , " bestRR_Pc ", bestRR_Pc)
+
         Pcdiff = meanPc - bestRR_Pc
 
         for i in range (Test_phase_trials):
             if (i == Test_phase_trials-1):
-                Mean_mrt.append(meanMRT)
-                Best_mrt.append(bestRR_MRT)
-                Mean_pc.append(meanPc)
-                Best_pc.append(bestRR_Pc)
-                bestReward.append(bestRewardRate)
-                userReward.append(rewardRate)
+                Mean_mrt_csv.append(meanMRT)
+                Best_mrt_csv.append(bestRR_MRT)
+                Mean_pc_csv.append(meanPc)
+                Best_pc_csv.append(bestRR_Pc)
+                bestReward_csv.append(bestRewardRate)
+                userReward_csv.append(rewardRate)
             else :
-                Mean_mrt.append("-")
-                Best_mrt.append("-")
-                Mean_pc.append("-")
-                Best_pc.append("-")
-                bestReward.append("-")
-                userReward.append("-")
+                Mean_mrt_csv.append("-")
+                Best_mrt_csv.append("-")
+                Mean_pc_csv.append("-")
+                Best_pc_csv.append("-")
+                bestReward_csv.append("-")
+                userReward_csv.append("-")
         Pcdiff = Pcdiff * 100
         Pcdiff = float(format(Pcdiff,".3f"))
         
         correctResponsesDiffPerMin = ((nCorrectResponses/experimentMins) - (potentialNCorrectResponses/potentialExperimentMins))
-        
-        print("MRTdiff , " , MRTdiff , " Pcdiff , " , Pcdiff)
+     
         if (bestRewardRate >= rewardRate) :
             if(Pcdiff > 0 and MRTdiff > 0): #3
                 type_acc = "More"
@@ -769,9 +741,10 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             type_acc = "Suff"
             type_speed = "Suff"
         
-        select_gif(MRTdiff,type_speed)
-        select_gif(Pcdiff,type_acc)
-            
+        
+        feedback_gif_pc = "rf" + str(select_gif((meanPc/bestRR_Pc),type_acc , "p") )
+        feedback_gif_sp  = "lf" + str(select_gif((meanMRT/bestRR_MRT),type_speed , "s"))
+        
         correctResponsesDiffPerMin = correctResponsesDiffPerMin * -1
         MRTpercent = (MRTdiff/meanMRT)*100
         pointsPerMin = nCorrectResponses/experimentMins
@@ -788,15 +761,14 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7] + "_a_" + type_acc + "_s_" + type_speed
         else:
             feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7]
-        
-        print("dir : " , feedb_pic_dir)
-        FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin)
+       
+        FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin , (feedback_gif_sp,feedback_gif_pc))
         event.waitKeys(keyList=['space'] , clearEvents = True)
 
 
-    SaveDate(usrInfo , Trial , CatNum , CorrAns  , userAns , RTime ,
-    Acc , userSpeed ,coherence , nDots,  Correct_feedback_dur , 
-    ITI_dur  , Wrong_feedback_dur ,Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward)
+    SaveDate(usrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv ,
+    Acc_csv , userSpeed_csv ,coherence , nDots,  Correct_feedback_dur , 
+    ITI_dur  , Wrong_feedback_dur ,Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv)
         
 def Finish(win):
     displayImg(win,'thanks',0,instr=True,size=None,pos=None)
@@ -806,9 +778,9 @@ def Index_check(arr , maxim):
     for i in range(maxim-len(arr)) :
         arr.append(' ')  
         
-def SaveDate(UsrInfo , Trial , CatNum , CorrAns  , userAns , RTime , Acc , 
-userSpeed ,Coherence , numberofDots,  FeedbackTime , ITI  , ErrorTimeout ,
-Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward):
+def SaveDate(UsrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv , Acc_csv , 
+userSpeed_csv ,Coherence , numberofDots,  FeedbackTime , ITI  , ErrorTimeout ,
+Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv):
     Id = []
     Name = []
     LastName = []
@@ -824,8 +796,8 @@ Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward):
     Errtime = []
     
     usrNum, usrName , usrLastName , usrAge , usrGender ,usrHand , taskType , usrType = UsrInfo
-    maxim = max(len(Trial),len(CatNum),len(CorrAns),len(Acc),len(RTime),len(userAns) , len(userSpeed) , 
-    len(Mean_mrt) , len(Best_mrt) ,len(Mean_pc) ,len(Best_pc) , len(bestReward), len(userReward))
+    maxim = max(len(Trial_csv),len(CatNum_csv),len(CorrAns_csv),len(Acc_csv),len(RTime_csv),len(userAns_csv) , len(userSpeed_csv) , 
+    len(Mean_mrt_csv) , len(Best_mrt_csv) ,len(Mean_pc_csv) ,len(Best_pc_csv) , len(bestReward_csv), len(userReward_csv))
     for i in range (maxim):
         Id.append(usrNum)
         Name.append('') 
@@ -848,9 +820,9 @@ Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward):
     DomHand[0] = usrHand
     Type[0] = taskType
     Adult_Child[0] = usrType
-    if ( ( len(Trial),len(CatNum),len(CorrAns),len(Acc),len(RTime),len(userAns) , len(userSpeed) ,
-    len(Mean_mrt) , len(Best_mrt) ,len(Mean_pc) ,len(Best_pc) , len(bestReward), len(userReward)/ 13) != maxim ):
-        l = [Trial,CatNum , CorrAns , Acc ,RTime , userAns , userSpeed , Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward]
+    if ( ( len(Trial_csv),len(CatNum_csv),len(CorrAns_csv),len(Acc_csv),len(RTime_csv),len(userAns_csv) , len(userSpeed_csv) ,
+    len(Mean_mrt_csv) , len(Best_mrt_csv) ,len(Mean_pc_csv) ,len(Best_pc_csv) , len(bestReward_csv), len(userReward_csv)/ 13) != maxim ):
+        l = [Trial_csv,CatNum_csv , CorrAns_csv , Acc_csv ,RTime_csv , userAns_csv , userSpeed_csv , Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv]
         for ind_l in l:
             Index_check(ind_l,maxim)
     data_dict = {
@@ -862,30 +834,30 @@ Mean_mrt , Best_mrt ,Mean_pc ,Best_pc , bestReward, userReward):
     "Handedness" : DomHand,
     "Subject.Type" : Adult_Child , 
     "FeedbackType" : Type ,
-    "Trial" : Trial ,
-    "Category.number" :CatNum ,
-    "Correct.answer" : CorrAns , 
-    "Acuuracy" : Acc ,
-    "R_time" : RTime ,
-    "User_answer" : userAns ,
-    "User_speed" : userSpeed ,
+    "Trial_csv" : Trial_csv ,
+    "Category.number" :CatNum_csv ,
+    "Correct.answer" : CorrAns_csv , 
+    "Acuuracy" : Acc_csv ,
+    "R_time" : RTime_csv ,
+    "User_answer" : userAns_csv ,
+    "User_speed" : userSpeed_csv ,
     "Coherence" : coh ,
     "numberofDots"  : dot_num ,
     "ErrorTimeout" : Errtime ,
     "FeedbackTime" : FDtime , 
     "ITI": iti ,
-    "Mean_MRT" : Mean_mrt ,
-    "Best_MRT" : Best_mrt ,
-    "Mean_PC" : Mean_pc ,
-    "Best_PC" : Best_pc ,
-    "Best_Reward_rate" : bestReward ,
-    "Reward_rate" : userReward
+    "Mean_MRT" : Mean_mrt_csv ,
+    "Best_MRT" : Best_mrt_csv ,
+    "Mean_PC" : Mean_pc_csv ,
+    "Best_PC" : Best_pc_csv ,
+    "Best_Reward_rate" : bestReward_csv ,
+    "Reward_rate" : userReward_csv
 
     
     }
     
     UserInfoDF = pd.DataFrame(data_dict,columns= ['Subject.num','Subject.name','Subject.surName','Age' , 'Gender' , 'Handedness' , 
-    'Subject.Type' , 'FeedbackType' , 'Trial','Category.number'
+    'Subject.Type' , 'FeedbackType' , 'Trial_csv','Category.number'
     ,'Correct.answer','Acuuracy' ,'R_time' , 'User_answer','User_speed' ,
     "Coherence" , "numberofDots" ,  "ErrorTimeout" , "FeedbackTime" , "ITI" , 
     "Mean_MRT" ,"Best_MRT"  ,"Mean_PC"  ,"Best_PC"  ,"Best_Reward_rate"  ,"Reward_rate"
