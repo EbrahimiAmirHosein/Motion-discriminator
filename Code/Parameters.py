@@ -16,23 +16,21 @@ Too_soon = 0.3
 
 #training phase parameters
 Trainning_phase_blocks = 1
-Trainning_phase_trials = 10
+Trainning_phase_trials = 25
 correct_sequence = 4
 
 #test phase parameters:
-Test_phase_blocks = 1
-Test_phase_trials = 7
-Test_nBlock_bound = 1 # 5 block * 40 trial -> 200 trial 
-
+Test_phase_blocks = 24 #24
+Test_phase_trials = 40 #40
+Test_nBlock_bound = 5 #200 5 * 40 = 200
 stoch_s = 0.1
 
-efficient_thrsh = 1e-3
 
 #dots stimuli parameters
 nDots = 100
 coherence = 0.4
 dotSize=4.0
-speed=3.0
+speed=3.5
 opacity=1.0
 
 fieldPos =(0.0, 0.0)
