@@ -113,18 +113,54 @@ def Txt_loader(win , title , duration):
     win.flip()
     
 def play_encode_num (number):
-    if number > 20 and (number%10 != 0) :
-        a1 = int(number / 10)
-        a2 = number % 10
-        playSound(None,"numbers/o" + str(a1 * 10) + "_" )
-        playSound(None,"numbers/o" + str(int(a2)))
+    done = 0
+    a2 = number
+    a3 = number
+    a4 = number
+    if(number < 20):
+        playSound(None,"numbers/o" + str(int(number)))
+        done = 1
     else:
-        playSound(None,"numbers/o" + str(int(number))  )
-        
+        if (number >= 1000 and (number%1000 != 0)):
+            a1 = int(number / 1000) 
+            a2 = number % 1000   
+            a3=a2
+            playSound(None,"numbers/o" + str(a1 * 1000) + "_" )
+            done = 0
+        elif(number >= 1000 and (number%1000 == 0)):
+            a1 = int(number / 1000)
+            playSound(None,"numbers/o" + str(a1 * 1000) )
+            done = 1
+        if(done != 1):
+            if(a2 >= 100 and (number%100 != 0)):
+                a1 = int(a2 / 100) #1 2 3 4 5 
+                a3 = a2 % 100   #23  5
+                playSound(None,"numbers/o" + str(a1 * 100) + "_" )
+                done = 0
+            
+            elif(a2 >= 100 and (a2%100 == 0)):
+                a1 = int(a2 / 100)
+                playSound(None,"numbers/o" + str(a1 * 100) )
+                done = 1
+            if(done != 1):
+                if(a3 >= 20 and (a3%10 != 0)):
+                    a1 = int(a3 / 10) #1 2 3 4 5 
+                    a4 = a3 % 10   #5
+                    playSound(None,"numbers/o" + str(a1 * 10) + "_" )
+                    playSound(None,"numbers/o" + str(int(a4)))  
+                    done = 1
+                elif(a3 >= 20 and (a3%10 == 0)):
+                    a1 = int(a3 / 10)
+                    playSound(None,"numbers/o" + str(a1 * 10) )
+                    done = 1
+                elif(a3 < 20):
+                    playSound(None,"numbers/o" + str(int(a3)))
+                    done = 1
+                
 
     
     
-def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb ):
+def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb):
     
     if (feedb_pic_dir[3:8] == "Adult"):
         positions = [(0.29,0.34),(0.12,0.34),(-0.42,0.34),(0.5,0.24)]
@@ -192,8 +228,9 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb ):
         grid_horz_justification='center',
         units='norm')
     img.draw()
-    Left_img.draw()
-    Right_img.draw()
+    if (feedb_pic_dir[:3]=="HF"):
+        Left_img.draw()
+        Right_img.draw()
     txt_nCorRes.draw()
     txt_exptMins.draw()
     txt_pointsPerMin.draw()
@@ -517,6 +554,8 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         Ncor_a = 0
         Nicor_a = 0
         s_time = timer.getTime()
+        if (usrInfo[7] == "Child"):
+            displayImg(win ,"sheep stages/Stage_" + str(block_c) , 4 , False, None, None )
         for trial_c in range(1 , Test_phase_trials+1):
             CatNum_csv.append(block_c)
             # Fixation -> stimulus -> Feedback -> ITI
@@ -638,7 +677,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         RRnum = Pc*trialsBack
         RRden = ((MRT+(ITI_dur)+(Correct_feedback_dur)+((1-Pc)*(Wrong_feedback_dur)))*trialsBack)
         rewardRate=RRnum/RRden
-        
+        print("RRden      " , RRden)
      
         
         #feedback
@@ -865,3 +904,4 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
     ])
     dir_csv = "../Output_File/"
     UserInfoDF.to_csv( dir_csv + str(datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))+"__" + str(usrName) + '_' + str(usrNum) + '.csv' ,index=False,header=True , line_terminator='\r\n')
+    
