@@ -1,7 +1,7 @@
 from psychopy import visual, monitors
 import random 
 import numpy as np
-
+ 
 #extra
 epsilon = 1e-9
 
@@ -21,17 +21,17 @@ correct_sequence = 4
 
 #test phase parameters:
 Test_phase_blocks = 24 #24
-Test_phase_trials = 40 #40
+Test_phase_trials = 4 #40
 Test_nBlock_bound = 5 #200 5 * 40 = 200
 stoch_s = 0.1
 
 
 #dots stimuli parameters
-nDots = 100
-coherence = 0.4
+nDots = 200
+coherence = 0.3
 dotSize=4.0
-speed=3.5
-opacity=1.0
+speed=5
+opacity=1
 
 fieldPos =(0.0, 0.0)
 fieldSize = (300.0, 300.0)
