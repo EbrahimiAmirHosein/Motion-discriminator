@@ -1,8 +1,10 @@
 from psychopy import visual , core , event , gui , sound 
-from scipy.stats import logistic
-import math
+import psychtoolbox as ptb
+from psychopy import sound
 from psychopy.constants import (PLAYING, PAUSED)
 from psychopy.hardware import keyboard
+from scipy.stats import logistic
+import math
 from Parameters import*
 import pandas as pd
 from datetime import datetime 
@@ -228,7 +230,8 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb):
         grid_horz_justification='center',
         units='norm')
     img.draw()
-    if (feedb_pic_dir[:3]=="HF"):
+    print(feedb_pic_dir[:2])
+    if (feedb_pic_dir[:2]=="HF"):
         Left_img.draw()
         Right_img.draw()
     txt_nCorRes.draw()
@@ -238,22 +241,23 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb):
     windows.flip()
     
     #fixed 
-    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
-    play_encode_num (nCorRes)
-    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
-    play_encode_num (exptMins)
-    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
-    play_encode_num (pointsPerMin)
-    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
-    play_encode_num (math.floor(pointsPerMin/5))
-    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
-    
-    if(feedb_pic_dir[:2] == "LF"):
-        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
-    else:
-        playSound(None ,"HF_" + feedb_pic_dir[3:8] + "/" +  feedb_pic_dir )
+#    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (nCorRes)
+#    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (exptMins)
+#    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (pointsPerMin)
+#    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
+#    play_encode_num (math.floor(pointsPerMin/5))
+#    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
+#    
+#    if(feedb_pic_dir[:2] == "LF"):
+#        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
+#    else:
+#        playSound(None ,"HF_" + feedb_pic_dir[3:8] + "/" +  feedb_pic_dir )
         
     windows.color = [-1,-1,-1]
+    
 
 
     
@@ -677,7 +681,6 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         RRnum = Pc*trialsBack
         RRden = ((MRT+(ITI_dur)+(Correct_feedback_dur)+((1-Pc)*(Wrong_feedback_dur)))*trialsBack)
         rewardRate=RRnum/RRden
-        print("RRden      " , RRden)
      
         
         #feedback
@@ -802,6 +805,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7]
        
         FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin , (feedback_gif_sp,feedback_gif_pc))
+        playbeep(60)
         event.waitKeys(keyList=['space'] , clearEvents = True)
 
 
@@ -812,6 +816,18 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
 def Finish(win):
     displayImg(win,'thanks',0,instr=True,size=None,pos=None)
     playSound(None,"End_thanks/Thanks")
+
+def playbeep(duration):
+    timer = duration
+    while(timer > 0):
+        core.wait(1)
+        timer = timer - 1
+    mySound = sound.Sound('../Asset/voice/beep/Beep.wav')
+    mySound.play(2)
+    core.wait(2)
+    
+
+    
     
 def Index_check(arr , maxim):
     for i in range(maxim-len(arr)) :
