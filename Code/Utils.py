@@ -120,43 +120,51 @@ def play_encode_num (number):
     a3 = number
     a4 = number
     if(number < 20):
-        playSound(None,"numbers/o" + str(int(number)))
+#        playSound(None,"numbers/o" + str(int(number)))
+        print("numbers/o" + str(int(number)))
         done = 1
     else:
         if (number >= 1000 and (number%1000 != 0)):
             a1 = int(number / 1000) 
             a2 = number % 1000   
             a3=a2
-            playSound(None,"numbers/o" + str(a1 * 1000) + "_" )
+#            playSound(None,"numbers/o" + str(a1 * 1000) + "_" )
+            print("numbers/o" + str(a1 * 1000) + "_")
             done = 0
         elif(number >= 1000 and (number%1000 == 0)):
             a1 = int(number / 1000)
-            playSound(None,"numbers/o" + str(a1 * 1000) )
+#            playSound(None,"numbers/o" + str(a1 * 1000) )
+            print("numbers/o" + str(a1 * 1000))
             done = 1
         if(done != 1):
-            if(a2 >= 100 and (number%100 != 0)):
+            if(a2 >= 100 and (a2%100 != 0)):
                 a1 = int(a2 / 100) #1 2 3 4 5 
                 a3 = a2 % 100   #23  5
-                playSound(None,"numbers/o" + str(a1 * 100) + "_" )
+#                playSound(None,"numbers/o" + str(a1 * 100) + "_" )
+                print("numbers/o" + str(a1 * 100) + "_" )
                 done = 0
             
             elif(a2 >= 100 and (a2%100 == 0)):
                 a1 = int(a2 / 100)
-                playSound(None,"numbers/o" + str(a1 * 100) )
+#                playSound(None,"numbers/o" + str(a1 * 100) )
+                print("numbers/o" + str(a1 * 100))
                 done = 1
             if(done != 1):
                 if(a3 >= 20 and (a3%10 != 0)):
                     a1 = int(a3 / 10) #1 2 3 4 5 
                     a4 = a3 % 10   #5
-                    playSound(None,"numbers/o" + str(a1 * 10) + "_" )
-                    playSound(None,"numbers/o" + str(int(a4)))  
+#                    playSound(None,"numbers/o" + str(a1 * 10) + "_" )
+#                    playSound(None,"numbers/o" + str(int(a4)))  
+                    print("numbers/o" + str(a1 * 10) + "_" + str(int(a4)))
                     done = 1
                 elif(a3 >= 20 and (a3%10 == 0)):
                     a1 = int(a3 / 10)
-                    playSound(None,"numbers/o" + str(a1 * 10) )
+#                    playSound(None,"numbers/o" + str(a1 * 10) )
+                    print("numbers/o" + str(a1 * 10))
                     done = 1
                 elif(a3 < 20):
-                    playSound(None,"numbers/o" + str(int(a3)))
+#                    playSound(None,"numbers/o" + str(int(a3)))
+                    print("numbers/o" + str(int(a3)))
                     done = 1
                 
 
@@ -241,20 +249,20 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb):
     windows.flip()
     
     #fixed 
-#    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (nCorRes)
-#    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (exptMins)
-#    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (pointsPerMin)
-#    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
-#    play_encode_num (math.floor(pointsPerMin/5))
-#    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
-#    
-#    if(feedb_pic_dir[:2] == "LF"):
-#        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
-#    else:
-#        playSound(None ,"HF_" + feedb_pic_dir[3:8] + "/" +  feedb_pic_dir )
+    playSound(None, "Fixed/P1_" + feedb_pic_dir[3:8]  )
+    play_encode_num (nCorRes)
+    playSound(None ,"Fixed/P2_" + feedb_pic_dir[3:8]  )
+    play_encode_num (exptMins)
+    playSound(None,"Fixed/P3_" + feedb_pic_dir[3:8]  )
+    play_encode_num (pointsPerMin)
+    playSound(None,"Fixed/P4_" + feedb_pic_dir[3:8]  )
+    play_encode_num (math.floor(pointsPerMin/5))
+    playSound(None,"Fixed/P5_" + feedb_pic_dir[3:8] )   
+    
+    if(feedb_pic_dir[:2] == "LF"):
+        playSound( None,"Rest/" +  feedb_pic_dir[3:8]  )
+    else:
+        playSound(None ,"HF_" + feedb_pic_dir[3:8] + "/" +  feedb_pic_dir )
         
     windows.color = [-1,-1,-1]
     
@@ -480,11 +488,11 @@ def EZ_Diffusion(Pc, VRT, MRT, S):
     return v,a,Ter
     
 def get_opt_acc(a,v):
-    return 1/(1 + (np.exp(-a*v)))
+    return 1/(1 + (np.exp(-a*v/(stoch_s**2))))
 
 
 def get_opt_speed(a,v,Ter):
-    return (a/(2*v))  *  ( (1-np.exp(-v*a))/(1+np.exp(-v*a)) ) + Ter
+    return (a/(2*v))  *  ( (1-np.exp(-v*a/(stoch_s**2)))/(1+np.exp(-v*a/(stoch_s**2)))) + Ter
     
 def ITI (win , duration):
 
@@ -649,164 +657,183 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             
             score_corr, score_time = 0 , 0 
             score_list.clear()
-        
-        timeStatdic = { 'otherRewardRates' : 0,
-                        'otherMRTs' : 0,
-                        'otherPcs' : 0}
-#        otherAoptions = np.arange (0.001,1,0.001)
-        for i in np.arange (0.001,1,0.001):
-            otherAoptions.append(i)
+        print("Pc " , Pc)
+        if(Pc < 0.55):
+            for i in range (Test_phase_trials):
+                if (i == Test_phase_trials-1):
+                    Mean_mrt_csv.append('Pc<55')
+                    Best_mrt_csv.append('Pc<55')
+                    Mean_pc_csv.append('Pc<55')
+                    Best_pc_csv.append('Pc<55')
+                    bestReward_csv.append('Pc<55')
+                    userReward_csv.append('Pc<55')
+                else :
+                    Mean_mrt_csv.append("-")
+                    Best_mrt_csv.append("-")
+                    Mean_pc_csv.append("-")
+                    Best_pc_csv.append("-")
+                    bestReward_csv.append("-")
+                    userReward_csv.append("-")
             
-        otherPcs.clear()
-        otherVRTs.clear()
-        otherMRTs.clear()
-        otherRewardRates.clear()
-        numerator.clear()
-        denominator.clear()
-      
-        for i in range(len(otherAoptions)):
-            otherPcs.append(get_opt_acc(otherAoptions[i],v))
-            otherVRTs.append((((otherAoptions[i]*np.power(stoch_s,2))/(2*np.power(v,3)))*(((2*((-v*otherAoptions[i])/np.power(stoch_s,2))*np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2))))-(np.exp(2*((-v*otherAoptions[i])/np.power(stoch_s,2))))+1)/np.power((np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2)))+1),2))))
-            otherMRTs.append(get_opt_speed(otherAoptions[i],v,Ter))                  
-            numerator.append(otherPcs[i]*trialsBack)
-            denominator.append((otherMRTs[i]+(ITI_dur)+(Correct_feedback_dur)+((1-otherPcs[i])*(Wrong_feedback_dur)))*trialsBack)
-            otherRewardRates.append(numerator[i]/denominator[i])
+            displayImg(win ,"Attention" , 0 , True, None, None )          
+            event.waitKeys()
+        else :
             
-        bestRewardRate = max(otherRewardRates)
-
         
-        RRnum = 0
-        RRden = 0
-        
-        RRnum = Pc*trialsBack
-        RRden = ((MRT+(ITI_dur)+(Correct_feedback_dur)+((1-Pc)*(Wrong_feedback_dur)))*trialsBack)
-        rewardRate=RRnum/RRden
-     
-        
-        #feedback
-        for i in range (len(otherAoptions)) :
-            if(bestRewardRate == otherRewardRates[i]):
-                positionOfBestRR = i
-        bestRR_Pc = otherPcs[positionOfBestRR]
-        bestRR_MRT = otherMRTs[positionOfBestRR]
-        bestRR_VRT = otherVRTs[positionOfBestRR]
-        
-        meanPc = Pc
-        meanMRT = MRT
-        meanVRT = VRT
-        
-        nCorrectResponses = np.round(meanPc*trialsBack)
-        
-        potentialNTrials = 0
-        potentialTrialTime = 0
-        
-        potentialTrialTime = (otherMRTs[positionOfBestRR]+(ITI_dur)+(Correct_feedback_dur)+((1-otherPcs[positionOfBestRR])*(Wrong_feedback_dur)))
-        
-        actualPotentialTime = 0
-        for i in np.arange(potentialTrialTime,60,potentialTrialTime):
-            potentialNTrials += 1
-            actualPotentialTime = i
-        potentialNCorrectResponses = bestRR_Pc * potentialNTrials
-        
-        experimentMins = RRden/60
-        potentialExperimentMins = actualPotentialTime/60
-    
-
-        MRTdiff = meanMRT - bestRR_MRT
-        MRTdiff = float(format(MRTdiff,".3f"))
-
-        Pcdiff = meanPc - bestRR_Pc
-
-        for i in range (Test_phase_trials):
-            if (i == Test_phase_trials-1):
-                Mean_mrt_csv.append(meanMRT)
-                Best_mrt_csv.append(bestRR_MRT)
-                Mean_pc_csv.append(meanPc)
-                Best_pc_csv.append(bestRR_Pc)
-                bestReward_csv.append(bestRewardRate)
-                userReward_csv.append(rewardRate)
-            else :
-                Mean_mrt_csv.append("-")
-                Best_mrt_csv.append("-")
-                Mean_pc_csv.append("-")
-                Best_pc_csv.append("-")
-                bestReward_csv.append("-")
-                userReward_csv.append("-")
-        Pcdiff = Pcdiff * 100
-        Pcdiff = float(format(Pcdiff,".3f"))
-        
-        correctResponsesDiffPerMin = ((nCorrectResponses/experimentMins) - (potentialNCorrectResponses/potentialExperimentMins))
-     
-        if (bestRewardRate >= rewardRate) :
-            if(Pcdiff > 0 and MRTdiff > 0): #3
-                type_acc = "More"
-                type_speed = "Less"
-            elif (Pcdiff < 0 and MRTdiff < 0): # 7
-                MRTdiff = MRTdiff * -1
-                Pcdiff = Pcdiff * -1
-                type_acc = "Less"
-                type_speed = "More"
-            elif(Pcdiff > 0 and MRTdiff < 0): #1
-                MRTdiff = MRTdiff * -1
-                type_acc = "More"
-                type_speed = "More"
-            else :                  #(Pcdiff < 0 and MRTdiff > 0): #9
-                Pcdiff = Pcdiff * -1
-                type_acc = "Less"
-                type_speed = "Less"
+    #        otherAoptions = np.arange (0.001,1,0.001)
+            for i in np.arange (0.001,1,0.001):
+                otherAoptions.append(i)
                 
-                #        elif(abs(Pcdiff) <= efficient_thrsh and MRTdiff < 0): #4
-                #            MRTdiff = MRTdiff * -1
-                #            Pcdiff = abs(Pcdiff)
-                #            type_acc = "Suff"
-                #            type_speed = "More"
-                            
-                #        elif(abs(Pcdiff) <= efficient_thrsh and MRTdiff > 0): #6
-                #            Pcdiff = abs(Pcdiff)
-                #            type_acc = "Suff"
-                #            type_speed = "Less"
-                #        elif(abs(Pcdiff) <= efficient_thrsh and abs(MRTdiff) <= efficient_thrsh): #5
-                #            MRTdiff = abs(MRTdiff)
-                #            Pcdiff = abs(Pcdiff)
-                #            type_acc = "Suff"
-                #            type_speed = "Suff"            
-                #        elif(Pcdiff < 0 and abs(MRTdiff) <= efficient_thrsh): #8
-                #            MRTdiff = abs(MRTdiff)
-                #            Pcdiff = Pcdiff * -1
-                #            type_acc = "Less"
-                #            type_speed = "Suff"
-                #        else: #2
-                #            MRTdiff = abs(MRTdiff)
-                #            type_acc = "More"
-                #            type_speed = "Suff"
-        else:
-            type_acc = "Suff"
-            type_speed = "Suff"
+            otherPcs.clear()
+            otherVRTs.clear()
+            otherMRTs.clear()
+            otherRewardRates.clear()
+            numerator.clear()
+            denominator.clear()
+          
+            for i in range(len(otherAoptions)):
+                otherPcs.append(get_opt_acc(otherAoptions[i],v))
+                otherVRTs.append((((otherAoptions[i]*np.power(stoch_s,2))/(2*np.power(v,3)))*(((2*((-v*otherAoptions[i])/np.power(stoch_s,2))*np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2))))-(np.exp(2*((-v*otherAoptions[i])/np.power(stoch_s,2))))+1)/np.power((np.exp(((-v*otherAoptions[i])/np.power(stoch_s,2)))+1),2))))
+                otherMRTs.append(get_opt_speed(otherAoptions[i],v,Ter))                  
+                numerator.append(otherPcs[i]*trialsBack)
+                denominator.append((otherMRTs[i]+(ITI_dur)+(Correct_feedback_dur)+((1-otherPcs[i])*(Wrong_feedback_dur)))*trialsBack)
+                otherRewardRates.append(numerator[i]/denominator[i])
+                
+            bestRewardRate = max(otherRewardRates)
+
+            
+            RRnum = 0
+            RRden = 0
+            
+            RRnum = Pc*trialsBack
+            RRden = ((MRT+(ITI_dur)+(Correct_feedback_dur)+((1-Pc)*(Wrong_feedback_dur)))*trialsBack)
+            rewardRate=RRnum/RRden
+         
+            
+            #feedback
+            for i in range (len(otherAoptions)) :
+                if(bestRewardRate == otherRewardRates[i]):
+                    positionOfBestRR = i
+            bestRR_Pc = otherPcs[positionOfBestRR]
+            bestRR_MRT = otherMRTs[positionOfBestRR]
+            bestRR_VRT = otherVRTs[positionOfBestRR]
+            
+            meanPc = Pc
+            meanMRT = MRT
+            meanVRT = VRT
+            
+            nCorrectResponses = np.round(meanPc*trialsBack)
+            
+            potentialNTrials = 0
+            potentialTrialTime = 0
+            
+            potentialTrialTime = (otherMRTs[positionOfBestRR]+(ITI_dur)+(Correct_feedback_dur)+((1-otherPcs[positionOfBestRR])*(Wrong_feedback_dur)))
+            
+            actualPotentialTime = 0
+            for i in np.arange(potentialTrialTime,60,potentialTrialTime):
+                potentialNTrials += 1
+                actualPotentialTime = i
+            potentialNCorrectResponses = bestRR_Pc * potentialNTrials
+            
+            experimentMins = RRden/60
+            potentialExperimentMins = actualPotentialTime/60
         
-        
-        feedback_gif_pc = "rf" + str(select_gif((meanPc/bestRR_Pc),type_acc , "p") )
-        feedback_gif_sp  = "lf" + str(select_gif((meanMRT/bestRR_MRT),type_speed , "s"))
-        
-        correctResponsesDiffPerMin = correctResponsesDiffPerMin * -1
-        MRTpercent = (MRTdiff/meanMRT)*100
-        pointsPerMin = nCorrectResponses/experimentMins
-        meanMRT = float(format(meanMRT,".0f"))               
-        nCorrectResponses = float(format(nCorrectResponses,".0f")) #. 
-        experimentMins = float(format(experimentMins,".0f")) #. 
-        pointsPerMin = float(format(pointsPerMin,".0f")) #. 
-        correctResponsesDiffPerMin = float(format(correctResponsesDiffPerMin,".0f"))
-        meanMRT = float(format(meanMRT,".0f"))
-        
-        
-        # load gifs
-        if (usrInfo[6] == "HF"):
-            feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7] + "_a_" + type_acc + "_s_" + type_speed
-        else:
-            feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7]
-       
-        FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin , (feedback_gif_sp,feedback_gif_pc))
-        playbeep(60)
-        event.waitKeys(keyList=['space'] , clearEvents = True)
+
+            MRTdiff = meanMRT - bestRR_MRT
+            MRTdiff = float(format(MRTdiff,".3f"))
+
+            Pcdiff = meanPc - bestRR_Pc
+
+            for i in range (Test_phase_trials):
+                if (i == Test_phase_trials-1):
+                    Mean_mrt_csv.append(meanMRT)
+                    Best_mrt_csv.append(bestRR_MRT)
+                    Mean_pc_csv.append(meanPc)
+                    Best_pc_csv.append(bestRR_Pc)
+                    bestReward_csv.append(bestRewardRate)
+                    userReward_csv.append(rewardRate)
+                else :
+                    Mean_mrt_csv.append("-")
+                    Best_mrt_csv.append("-")
+                    Mean_pc_csv.append("-")
+                    Best_pc_csv.append("-")
+                    bestReward_csv.append("-")
+                    userReward_csv.append("-")
+            Pcdiff = Pcdiff * 100
+            Pcdiff = float(format(Pcdiff,".3f"))
+            
+            correctResponsesDiffPerMin = ((nCorrectResponses/experimentMins) - (potentialNCorrectResponses/potentialExperimentMins))
+         
+            if (bestRewardRate >= rewardRate) :
+                if(Pcdiff > 0 and MRTdiff > 0): #3
+                    type_acc = "More"
+                    type_speed = "Less"
+                elif (Pcdiff < 0 and MRTdiff < 0): # 7
+                    MRTdiff = MRTdiff * -1
+                    Pcdiff = Pcdiff * -1
+                    type_acc = "Less"
+                    type_speed = "More"
+                elif(Pcdiff > 0 and MRTdiff < 0): #1
+                    MRTdiff = MRTdiff * -1
+                    type_acc = "More"
+                    type_speed = "More"
+                else :                  #(Pcdiff < 0 and MRTdiff > 0): #9
+                    Pcdiff = Pcdiff * -1
+                    type_acc = "Less"
+                    type_speed = "Less"
+                    
+                    #        elif(abs(Pcdiff) <= efficient_thrsh and MRTdiff < 0): #4
+                    #            MRTdiff = MRTdiff * -1
+                    #            Pcdiff = abs(Pcdiff)
+                    #            type_acc = "Suff"
+                    #            type_speed = "More"
+                                
+                    #        elif(abs(Pcdiff) <= efficient_thrsh and MRTdiff > 0): #6
+                    #            Pcdiff = abs(Pcdiff)
+                    #            type_acc = "Suff"
+                    #            type_speed = "Less"
+                    #        elif(abs(Pcdiff) <= efficient_thrsh and abs(MRTdiff) <= efficient_thrsh): #5
+                    #            MRTdiff = abs(MRTdiff)
+                    #            Pcdiff = abs(Pcdiff)
+                    #            type_acc = "Suff"
+                    #            type_speed = "Suff"            
+                    #        elif(Pcdiff < 0 and abs(MRTdiff) <= efficient_thrsh): #8
+                    #            MRTdiff = abs(MRTdiff)
+                    #            Pcdiff = Pcdiff * -1
+                    #            type_acc = "Less"
+                    #            type_speed = "Suff"
+                    #        else: #2
+                    #            MRTdiff = abs(MRTdiff)
+                    #            type_acc = "More"
+                    #            type_speed = "Suff"
+            else:
+                type_acc = "Suff"
+                type_speed = "Suff"
+            
+            
+            feedback_gif_pc = "rf" + str(select_gif((meanPc/bestRR_Pc),type_acc , "p") )
+            feedback_gif_sp  = "lf" + str(select_gif((meanMRT/bestRR_MRT),type_speed , "s"))
+            
+            correctResponsesDiffPerMin = correctResponsesDiffPerMin * -1
+            MRTpercent = (MRTdiff/meanMRT)*100
+            pointsPerMin = nCorrectResponses/experimentMins
+            meanMRT = float(format(meanMRT,".0f"))               
+            nCorrectResponses = float(format(nCorrectResponses,".0f")) #. 
+            experimentMins = float(format(experimentMins,".0f")) #. 
+            pointsPerMin = float(format(pointsPerMin,".0f")) #. 
+            correctResponsesDiffPerMin = float(format(correctResponsesDiffPerMin,".0f"))
+            meanMRT = float(format(meanMRT,".0f"))
+            
+            
+            # load gifs
+            if (usrInfo[6] == "HF"):
+                feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7] + "_a_" + type_acc + "_s_" + type_speed
+            else:
+                feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7]
+           
+            FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin , (feedback_gif_sp,feedback_gif_pc))
+            playbeep(beep_delay)
+            event.waitKeys(keyList=['space'] , clearEvents = True)
 
 
     SaveDate(usrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv ,
@@ -822,6 +849,9 @@ def playbeep(duration):
     while(timer > 0):
         core.wait(1)
         timer = timer - 1
+        intrupt = event.getKeys(['q'])
+        if 'q' in intrupt:
+            break
     mySound = sound.Sound('../Asset/voice/beep/Beep.wav')
     mySound.play(2)
     core.wait(2)
@@ -920,4 +950,5 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
     ])
     dir_csv = "../Output_File/"
     UserInfoDF.to_csv( dir_csv + str(datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))+"__" + str(usrName) + '_' + str(usrNum) + '.csv' ,index=False,header=True , line_terminator='\r\n')
-    
+
+
