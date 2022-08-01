@@ -3,6 +3,7 @@ import psychtoolbox as ptb
 from psychopy import sound
 from psychopy.constants import (PLAYING, PAUSED)
 from psychopy.hardware import keyboard
+from scipy import stats
 from scipy.stats import logistic
 import math
 from Parameters import*
@@ -238,7 +239,7 @@ def FeedBack(windows,feedb_pic_dir,nCorRes,exptMins,pointsPerMin ,lrfeedb):
         grid_horz_justification='center',
         units='norm')
     img.draw()
-    print(feedb_pic_dir[:2])
+    
     if (feedb_pic_dir[:2]=="HF"):
         Left_img.draw()
         Right_img.draw()
@@ -291,11 +292,11 @@ def playVideo(win,movieName):
 
 def Instruction(win,usrInfo):
     if (usrInfo[7] == "Child"):
-        playVideo(win,'introsheeps')
+        playVideo(win,usrInfo[6]+'_introsheeps')
         
     win.color = [1,1,1]
     win.flip()
-    displayImg(win,'Intro_' + usrInfo[7],0,instr=True,size=None,pos=None)
+    displayImg(win,usrInfo[6] + '_Intro_' + usrInfo[7] ,0,instr=True,size=None,pos=None)
     win.color = [-1,-1,-1]
     event.waitKeys(keyList=['space'] , clearEvents = True)
     
@@ -475,16 +476,21 @@ def EZ_Diffusion(Pc, VRT, MRT, S):
     # The default value for the scaling parameter s equals 0.1
     s2 = S**2
     L = logistic.ppf(Pc)
+#    print("sign L" , (L))
     # This gives drift rate.
     x = L * (L*Pc**2 - L*Pc+Pc - 0.5)/VRT  
+#    print("sign x" , (x))
     v = np.sign(Pc - 0.5) * S * x**(1/4) 
+#    print("sign v" , (v))
     # This gives boundary separation
     a = s2 * logistic.ppf(Pc) / v
+#    print("sign a" , (a))
     # This gives nondecision time
     y = -v * a / s2 
+#    print("sign y" , (y))
     MDT = (a/(2*v)) * (1-np.exp(y))/(1+np.exp(y))
+#    print("sign MDT" , (MDT))
     Ter = MRT - MDT
-    
     return v,a,Ter
     
 def get_opt_acc(a,v):
@@ -501,36 +507,83 @@ def ITI (win , duration):
 
     
 def training_phase(win,dot_stim,usrInfo,square_1,square_2):
+    
+    corr_rt = []
+    icorr_rt = []
+    CatNum_csv =[]
+    Trial_csv = []
+    CorrAns_csv = []
+    Acc_csv = []
+    RTime_csv = []
+    userSpeed_csv = []
+    userAns_csv = []
+    ITI_csv = []
     #training phase 25 trial
     dot_stim.coherence = 0.8
     Ncor_a = 0
     qualified = False
-    
-    for j in range(Trainning_phase_blocks):
+    second_chance = True
+    numberOfchances = 2
+    for chance in range (0,numberOfchances):        
         for i in range(Trainning_phase_trials):
             ITI_dur = random.uniform(0.4,0.6)
+            ITI_csv.append(ITI_dur)
             Fixation_dur = random.uniform(0.5,0.75)
+            CatNum_csv.append(chance)
+            Trial_csv.append(i)
             # Fixation -> stimulus -> Feedback -> ITI
             fixation(win,Fixation_dur)
-            key , Rt , _ = stimulus(win,dot_stim,square_1 , square_2)
-            corr, _ , _ ,_ , _ = Trial_feedback(win , key , Rt , dot_stim , usrInfo)
+            key , Rt , responskey = stimulus(win,dot_stim,square_1 , square_2)
+            RTime_csv.append(Rt) 
+            if 'z' in responskey:
+                userAns_csv.append('Left')
+            else:
+                userAns_csv.append('Right')
+                
+            corr, corr_RT , icorr_RT ,Speed , corrAns = Trial_feedback(win , key , Rt , dot_stim , usrInfo)
+            userSpeed_csv.append(Speed)
+            CorrAns_csv.append(corrAns)
+            
+            if (corr_RT != 0) :
+                corr_rt.append(corr_RT)
+            if (icorr_RT != 0) :
+                icorr_rt.append(icorr_RT)
             ITI(win , ITI_dur)
             
+            if (corr) : 
+                Acc_csv.append(1)
+            else :
+                Acc_csv.append(0)
+                
             if (corr) : 
                 Ncor_a +=1
             elif (not corr and Ncor_a != correct_sequence):
                 Ncor_a = 0
             if (Ncor_a >= correct_sequence):
                 qualified = True
-        if (not qualified):
+                
+        if (not qualified and chance==1):
             Finish(win)
             core.quit()
+        elif(not qualified and chance==0):
+            Instruction(win,usrInfo)
+            continue
+        elif(qualified or (Ncor_a/Trainning_phase_trials > 0.5)):
+            SaveDate_train(usrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv ,
+                Acc_csv , userSpeed_csv ,coherence , nDots,  Correct_feedback_dur , 
+                ITI_csv )
+            break
+            
+       
+            
+            
 
 def test_phase(win,dot_stim,usrInfo,square_1,square_2):
     #test phase 40 trial
     dot_stim.coherence = coherence
     score_corr = 0
     score_time = 0
+    score = 0
     score_list = []
     timeStatdic = {'block' : 0,
                    'trial_time' : 0,
@@ -551,6 +604,10 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
     
     
     user_vrt = []
+    best_vrt = []
+    Non_D_time = []
+    Drift_r = []
+    Bound_s = []
     CorrAns_csv = []
     RTime_csv = []
     userSpeed_csv = []
@@ -571,8 +628,10 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
         Ncor_a = 0
         Nicor_a = 0
         s_time = timer.getTime()
-        if (usrInfo[7] == "Child"):
-            displayImg(win ,"sheep stages/Stage_" + str(block_c) , 4 , False, None, None )
+        win.color = [1,1,1]
+        win.flip()
+        displayImg(win ,"sheep stages/" + usrInfo[7] +"_Stage_" + str(block_c) , 4 , False, None, None )
+        win.color = [-1,-1,-1]
         for trial_c in range(1 , Test_phase_trials+1):
             ITI_dur = random.uniform(0.4,0.6)
             ITI_csv.append(ITI_dur)
@@ -594,7 +653,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             if (corr_RT != 0) :
                 corr_rt.append(corr_RT)
             if (icorr_RT != 0) :
-                corr_rt.append(icorr_RT)
+                icorr_rt.append(icorr_RT)
                 
             ITI(win  , ITI_dur) #interTrialInterval
             
@@ -621,11 +680,14 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
                 score_time+=items['trial_time']
             score_list.append((score_corr * 60 / score_time, score_time))
             
-            corr_rt = np.asarray(corr_rt)
-            clean_rt = corr_rt[(corr_rt>Too_soon)&(corr_rt<Too_late)]
+            corr_rt_np = np.asarray(corr_rt)
+            #clean_rt = corr_rt_np[(corr_rt_np>Too_soon)&(corr_rt_np<Too_late)]
+            clean_rt = corr_rt_np
             if (len(clean_rt)!=0):
-                VRT = np.asarray(clean_rt).var()
-                MRT = np.asarray(clean_rt).mean()
+#                VRT = np.asarray(clean_rt).var()
+#                MRT = np.asarray(clean_rt).mean()
+                VRT = (stats.iqr(clean_rt)/stats.norm.ppf(.75)/2)**2
+                MRT = np.median(clean_rt)
             else:
                 VRT = epsilon
                 MRT = epsilon
@@ -641,7 +703,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             
             score_corr, score_time = 0 , 0
             score_list.clear()
-            
+        
         #each 200 trials    
         else :
             trialsBack = Test_nBlock_bound * Test_phase_trials
@@ -650,11 +712,14 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
                 score_time+=timeStat[i]['trial_time']
             score_list.append((score_corr * 60 / score_time , score_time)) #accuracy + timespent 
             
-            corr_rt = np.asarray(corr_rt)
-            clean_rt = corr_rt[(corr_rt>Too_soon)&(corr_rt<Too_late)]
+            corr_rt_np = np.asarray(corr_rt)
+#            clean_rt = corr_rt_np[(corr_rt_np>Too_soon)&(corr_rt_np<Too_late)]
+            clean_rt = corr_rt_np
             if (len(clean_rt)!=0):
-                VRT = np.asarray(clean_rt[-trialsBack:]).var()
-                MRT = np.asarray(clean_rt[-trialsBack:]).mean()
+#                VRT = np.asarray(clean_rt[-trialsBack:]).var()
+#                MRT = np.asarray(clean_rt[-trialsBack:]).mean()
+                VRT = (stats.iqr(clean_rt[-trialsBack:])/stats.norm.ppf(.75)/2)**2
+                MRT = np.median(clean_rt[-trialsBack:])
             else:
                 VRT = epsilon
                 MRT = epsilon
@@ -670,26 +735,13 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             score_corr, score_time = 0 , 0 
             score_list.clear()
         
-        if(Pc < 0.55):
-            for i in range (Test_phase_trials):
-                if (i == Test_phase_trials-1):
-                    Mean_mrt_csv.append('Pc<55')
-                    Best_mrt_csv.append('Pc<55')
-                    Mean_pc_csv.append('Pc<55')
-                    Best_pc_csv.append('Pc<55')
-                    bestReward_csv.append('Pc<55')
-                    userReward_csv.append('Pc<55')
-                    user_vrt.append('Pc<55')
-                else :
-                    Mean_mrt_csv.append("-")
-                    Best_mrt_csv.append("-")
-                    Mean_pc_csv.append("-")
-                    Best_pc_csv.append("-")
-                    bestReward_csv.append("-")
-                    userReward_csv.append("-")
-                    user_vrt.append("-")
-            
-            displayImg(win ,"Attention" , 0 , True, None, None )          
+        if(Pc < 0.55):    
+            print("here")
+            win.color = [1,1,1]
+            win.flip()
+            displayImg(win ,"Attention_" + usrInfo[7] , 0 , True, None, None )
+            win.color = [-1,-1,-1]
+            playSound(None, "55/" + usrInfo[7] )
             event.waitKeys()
         else :
             
@@ -714,7 +766,7 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
                 otherRewardRates.append(numerator[i]/denominator[i])
                 
             bestRewardRate = max(otherRewardRates)
-
+        
             
             RRnum = 0
             RRden = 0
@@ -767,6 +819,10 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
                     bestReward_csv.append(bestRewardRate)
                     userReward_csv.append(rewardRate)
                     user_vrt.append(meanVRT)
+                    best_vrt.append(bestRR_VRT)
+                    Non_D_time.append(Ter)
+                    Drift_r.append(v)
+                    Bound_s.append(a)
                 else :
                     Mean_mrt_csv.append("-")
                     Best_mrt_csv.append("-")
@@ -775,6 +831,10 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
                     bestReward_csv.append("-")
                     userReward_csv.append("-")
                     user_vrt.append("-")
+                    best_vrt.append("-")
+                    Non_D_time.append("-")
+                    Drift_r.append("-")
+                    Bound_s.append("-")
             Pcdiff = Pcdiff * 100
             Pcdiff = float(format(Pcdiff,".3f"))
             
@@ -840,22 +900,24 @@ def test_phase(win,dot_stim,usrInfo,square_1,square_2):
             correctResponsesDiffPerMin = float(format(correctResponsesDiffPerMin,".0f"))
             meanMRT = float(format(meanMRT,".0f"))
             
-            
+            score+= math.floor(pointsPerMin/5)
             # load gifs
             if (usrInfo[6] == "HF"):
                 feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7] + "_a_" + type_acc + "_s_" + type_speed
             else:
                 feedb_pic_dir = usrInfo[6] + "_" + usrInfo[7]
-           
-            FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin , (feedback_gif_sp,feedback_gif_pc))
-            playbeep(beep_delay)
-            event.waitKeys(keyList=['space'] , clearEvents = True)
+            
+            #In case NDT stay positive
+            if np.sign(Ter) > 0 and block_c != Test_phase_blocks :
+                FeedBack(win,feedb_pic_dir,nCorrectResponses,experimentMins,pointsPerMin , (feedback_gif_sp,feedback_gif_pc))
+                playbeep(beep_delay)
+                event.waitKeys(keyList=['space'] , clearEvents = True)
 
 
     SaveDate(usrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv ,
     Acc_csv , userSpeed_csv ,coherence , nDots,  Correct_feedback_dur , 
-    ITI_csv  , Err_feedback_dur ,Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv , user_vrt)
-        
+    ITI_csv  , Err_feedback_dur ,Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv , user_vrt,best_vrt,Non_D_time,Drift_r,Bound_s,score)
+
 def Finish(win):
     displayImg(win,'thanks',0,instr=True,size=None,pos=None)
     playSound(None,"End_thanks/Thanks")
@@ -880,8 +942,8 @@ def Index_check(arr , maxim):
         arr.append(' ')  
         
 def SaveDate(UsrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv , Acc_csv , 
-userSpeed_csv ,Coherence , numberofDots,  FeedbackTime , ITI  , ErrorTimeout ,
-Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv , user_vrt):
+    userSpeed_csv ,Coherence , numberofDots,  FeedbackTime , ITI  , ErrorTimeout ,
+    Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv , user_vrt , best_vrt,NDT,Drift_rate,boundary,score):
     Id = []
     Name = []
     LastName = []
@@ -891,18 +953,20 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
     Type = []
     Adult_Child = []
     coh = []
+    Score = []
     dot_num = []
     FDtime = []
     Errtime = []
     
     usrNum, usrName , usrLastName , usrAge , usrGender ,usrHand , taskType , usrType = UsrInfo
     maxim = max(len(Trial_csv),len(CatNum_csv),len(CorrAns_csv),len(Acc_csv),len(RTime_csv),len(userAns_csv) , len(userSpeed_csv) , 
-    len(Mean_mrt_csv) , len(ITI) , len(Best_mrt_csv) ,len(Mean_pc_csv) ,len(Best_pc_csv) , len(bestReward_csv), len(user_vrt) ,  len(userReward_csv))
+    len(Mean_mrt_csv) , len(ITI) , len(Best_mrt_csv) ,len(Mean_pc_csv) ,len(Best_pc_csv) , len(bestReward_csv), len(user_vrt) ,len(best_vrt) ,len(boundary),len(NDT),len(Drift_rate),len(userReward_csv))
     for i in range (maxim):
         Id.append(usrNum)
         Name.append('') 
         LastName.append('') 
         Age.append('') 
+        Score.append('')
         Gender.append('') 
         DomHand.append('')
         Type.append('')
@@ -911,7 +975,7 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
         dot_num.append(numberofDots)
         FDtime.append(FeedbackTime)
         Errtime.append(ErrorTimeout)
-    
+    Score[0] = score
     Name[0] = usrName
     LastName[0] = usrLastName
     Age[0] = usrAge
@@ -919,7 +983,7 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
     DomHand[0] = usrHand
     Type[0] = taskType
     Adult_Child[0] = usrType
-    if (( (  len(user_vrt) + len(Trial_csv)  + len(CatNum_csv) + len(CorrAns_csv) + len(Acc_csv) + len(RTime_csv)+ len(userAns_csv) + len(userSpeed_csv) + len(ITI) +
+    if (( (len(NDT)+len(Drift_rate)+len(boundary) +len(best_vrt) + len(user_vrt) + len(Trial_csv)  + len(CatNum_csv) + len(CorrAns_csv) + len(Acc_csv) + len(RTime_csv)+ len(userAns_csv) + len(userSpeed_csv) + len(ITI) +
     len(Mean_mrt_csv) + len(Best_mrt_csv) + len(Mean_pc_csv) + len(Best_pc_csv) +  len(bestReward_csv)+ len(userReward_csv))/ 15) != maxim ):
         l = [user_vrt ,Trial_csv,CatNum_csv , CorrAns_csv , Acc_csv ,RTime_csv , userAns_csv , userSpeed_csv , ITI , Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userReward_csv]
         for ind_l in l:
@@ -951,8 +1015,12 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
     "Best_PC" : Best_pc_csv ,
     "Best_Reward_rate" : bestReward_csv ,
     "Reward_rate" : userReward_csv ,
-    "Mean_VRT" :  user_vrt
-
+    "VRT" :  user_vrt,
+    "Best_VRT" :  best_vrt,
+    "NDT" : NDT , 
+    "Drift_rate": Drift_rate ,
+    "boundary": boundary,
+    "score": Score
     
     }
     
@@ -960,10 +1028,82 @@ Mean_mrt_csv , Best_mrt_csv ,Mean_pc_csv ,Best_pc_csv , bestReward_csv, userRewa
     'Subject.Type' , 'FeedbackType' , 'Trial_csv','Category.number'
     ,'Correct.answer','Acuuracy' ,'R_time' , 'User_answer','User_speed' ,
     "Coherence" , "numberofDots" ,  "ErrorTimeout" , "FeedbackTime" , "ITI" , 
-    "Mean_MRT" ,"Best_MRT"  ,"Mean_PC"  ,"Best_PC"  ,"Best_Reward_rate"  ,"Reward_rate" , "Mean_VRT"
+    "Mean_MRT" ,"Best_MRT"  ,"Mean_PC"  ,"Best_PC"  ,"Best_Reward_rate"  ,"Reward_rate" , "VRT" , "Best_VRT" , "NDT" , "Drift_rate" , "boundary" , "score"
     
     ])
     dir_csv = "../Output_File/"
     UserInfoDF.to_csv( dir_csv + str(datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))+"__" + str(usrName) + '_' + str(usrNum) + '.csv' ,index=False,header=True , line_terminator='\r\n')
 
+
+
+def SaveDate_train(UsrInfo , Trial_csv , CatNum_csv , CorrAns_csv  , userAns_csv , RTime_csv , Acc_csv , 
+    userSpeed_csv ,Coherence , numberofDots,  FeedbackTime , ITI ):
+    Id = []
+    Name = []
+    LastName = []
+    Age = []
+    Gender = []
+    DomHand = []
+    Type = []
+    Adult_Child = []
+    coh = []
+    dot_num = []
+    FDtime = []
+    Errtime = []
+    
+    usrNum, usrName , usrLastName , usrAge , usrGender ,usrHand , taskType , usrType = UsrInfo
+    maxim = max(len(Trial_csv),len(CatNum_csv),len(CorrAns_csv),len(Acc_csv),len(RTime_csv),len(userAns_csv) , len(userSpeed_csv)  , len(ITI) )
+    for i in range (maxim):
+        Id.append(usrNum)
+        Name.append('') 
+        LastName.append('') 
+        Age.append('') 
+        Gender.append('') 
+        DomHand.append('')
+        Type.append('')
+        Adult_Child.append('')
+        coh.append(Coherence)
+        dot_num.append(numberofDots)
+        FDtime.append(FeedbackTime)
+    
+    Name[0] = usrName
+    LastName[0] = usrLastName
+    Age[0] = usrAge
+    Gender[0] = usrGender
+    DomHand[0] = usrHand
+    Type[0] = taskType
+    Adult_Child[0] = usrType
+    
+    if ((( len(CatNum_csv) + len(CorrAns_csv) + len(Acc_csv) + len(RTime_csv)+ len(userAns_csv) + len(userSpeed_csv) + len(ITI))/ 7) != maxim ):
+        l = [Trial_csv,CatNum_csv , CorrAns_csv , Acc_csv ,RTime_csv , userAns_csv , userSpeed_csv , ITI ]
+        for ind_l in l:
+            Index_check(ind_l,maxim)
+    data_dict = {
+    "Subject.num" : Id ,
+    "Subject.name" : Name ,
+    "Subject.surName" : LastName ,
+    "Age" : Age ,
+    "Gender" : Gender ,
+    "Handedness" : DomHand,
+    "Subject.Type" : Adult_Child , 
+    "FeedbackType" : Type ,
+    "Trial_csv" : Trial_csv ,
+    "Category.number" :CatNum_csv ,
+    "Correct.answer" : CorrAns_csv , 
+    "Acuuracy" : Acc_csv ,
+    "R_time" : RTime_csv ,
+    "User_answer" : userAns_csv ,
+    "User_speed" : userSpeed_csv ,
+    "Coherence" : coh ,
+    "numberofDots"  : dot_num ,
+    "FeedbackTime" : FDtime , 
+    "ITI": ITI 
+    }
+    
+    UserInfoDF = pd.DataFrame(data_dict,columns= ['Subject.num','Subject.name','Subject.surName','Age' , 'Gender' , 'Handedness' , 
+    'Subject.Type' , 'FeedbackType' , 'Trial_csv','Category.number'
+    ,'Correct.answer','Acuuracy' ,'R_time' , 'User_answer','User_speed' ,
+    "Coherence" , "numberofDots" , "FeedbackTime" , "ITI" ])
+    dir_csv = "../Output_File/"
+    UserInfoDF.to_csv( dir_csv + "Training_" +  str(datetime.now().strftime("%d_%m_%Y_%H_%M_%S"))+"__" + str(usrName) + '_' + str(usrNum) + '.csv' ,index=False,header=True , line_terminator='\r\n')
 
